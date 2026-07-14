@@ -1,4 +1,3 @@
-//import express from 'express'; will this work for common JS as well?
 const express = require("express");
 const pool = require("../config/db");
 
@@ -94,51 +93,43 @@ router.get('/', async (req, res) => {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-try {
-    const propertiesSql = `
-      SELECT *
-      FROM rets_property
-      ${whereClause}
-      ORDER BY L_ListingID
-      LIMIT ?
-      OFFSET ?
-    `;
+    try {
+        const propertiesSql = `
+        SELECT *
+        FROM rets_property
+        ${whereClause}
+        ORDER BY L_ListingID
+        LIMIT ?
+        OFFSET ?
+        `;
 
-    const countSql = `
-    SELECT COUNT(*) AS total
-    FROM rets_property
-    ${whereClause}
-    `;
+        const countSql = `
+        SELECT COUNT(*) AS total
+        FROM rets_property
+        ${whereClause}
+        `;
 
-    const propertiesValues = [...values, limit, offset];
+        const propertiesValues = [...values, limit, offset];
 
-    console.log("SQL:", propertiesSql);
-console.log("Values:", propertiesValues);
-console.log(
-  "Types:",
-  propertiesValues.map((value) => typeof value)
-);
+        const[rows] = await pool.query(propertiesSql, propertiesValues);
+        const [countRows] = await pool.query(countSql, values);
 
-    const[rows] = await pool.query(propertiesSql, propertiesValues);
-    const [countRows] = await pool.query(countSql, values);
+        const total = countRows[0].total;
 
-    const total = countRows[0].total;
+        return res.status(200).json({
+            total,
+            limit,
+            offset,
+            results: rows,
+        });
+    } catch (error) {
+        console.error ("Failed to fetch prperties: ", error);
 
-    return res.status(200).json({
-        total,
-        limit,
-        offset,
-        results: rows,
-    });
-} catch (error) {
-    console.error ("Failed to fetch prperties: ", error);
-
-    res.status(500).json({
-        error: "Failed to fetch",
-    });
-}
+        res.status(500).json({
+            error: "Failed to fetch",
+        });
+    }
 });
 
 module.exports = router;
-//export default router Consider switching to ES modules
 
