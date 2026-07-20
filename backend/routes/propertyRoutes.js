@@ -131,6 +131,45 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/:id/openhouses', async(req, res) => {
+    const listingId = req.params.id;
+
+    //Ensure the ID does not exceed the VARCHAR(255) limit.
+    if (Buffer.byteLength(listingId, "utf8") > 255) {
+        return res.status(400).json({
+            error: "Malformed request: Listing ID is too long."
+        });
+    }
+
+    //Reject any whitespace characters (spaces, tabs, newlines)
+    if (/\s/.test(listingId)) {
+        return res.status(400).json({
+            error: "Malformed request: Listing ID must not contain whitespace."
+        });
+    }
+
+    try {
+        //Check if property exists
+        const [propertyRows] = await pool.query('SELECT 1 FROM `rets_openhouse` WHERE `L_ListingID` = ?', [listingId]);
+
+        if (propertyRows.length === 0) {
+            return res.status(404).json({
+                error: "Property not found."
+            });
+        }
+
+        const [openHouseRows] = await pool.query('SELECT * FROM `rets_openhouse` WHERE `L_ListingID` = ? ORDER BY OpenHouseDate, OH_StartTime', [listingId]);
+        
+        return res.status(200).json(openHouseRows);
+    } catch (error) {
+        console.error('Failed to fetch property openhouse information: ', error);
+
+        return res.status(500).json({ 
+            error: "Something went wrong on our end. Please refresh the page or try again in a few minutes." 
+        });
+    }
+});
+
 router.get('/:id', async (req, res) => {
     const idString = req.params.id;
 
