@@ -43,7 +43,7 @@ router.get('/', async (req, res) => {
     ) {
         return res.status(400).json({
             error: 
-            "minPrice, MaxPrice, beds, and baths must be valid non-negative numbers",
+            "minPrice, MaxPrice, beds, and baths must be valid non-negative numbers. Beds should be an integer.",
         })
     }
 
@@ -123,10 +123,53 @@ router.get('/', async (req, res) => {
             results: rows,
         });
     } catch (error) {
-        console.error ("Failed to fetch prperties: ", error);
+        console.error ("Failed to fetch properties: ", error);
 
         res.status(500).json({
             error: "Failed to fetch",
+        });
+    }
+});
+
+router.get('/:id', async (req, res) => {
+    const idString = req.params.id;
+
+    //Tests to make sure the input is just digits.
+    if (!/^\d+$/.test(idString)) {
+        return res.status(400).json({
+            error : "Malformed request: ID must be a valid integer containing only digits and no spaces."
+        });
+    }
+
+    //Check the length of the ID. 10 digits is the length for INT
+    if (idString.length > 10) {
+        return res.status(400).json({
+            error: "Malformed request: ID is too long."
+        });
+    }
+
+    const propertyId = Number.parseInt(idString, 10);
+
+    try {
+        const [rows] = await pool.query('SELECT * FROM `rets_property` WHERE `id` = ?', [propertyId]);
+
+        //Extract object from array even if it's just one.
+        const property = rows[0];
+
+        //Message when ID is not found
+        if (!property) {
+            return res.status(404).json({ 
+                message: "Property not found. Please, check the entered ID." 
+            });
+        }
+
+        return res.status(200).json(property);
+
+    } catch (error) {
+        console.log('Failed to fetch property: ', error);
+
+        return res.status(500).json({ 
+            error: "Something went wrong on our end. Please refresh the page or try again in a few minutes." 
         });
     }
 });
