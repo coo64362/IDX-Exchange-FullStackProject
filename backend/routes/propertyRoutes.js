@@ -171,23 +171,39 @@ router.get('/:id/openhouses', async(req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
-    const idString = req.params.id;
+const propertyId = req.params.id;
+
+    //Ensure the ID does not exceed the VARCHAR(255) limit.
+    if (Buffer.byteLength(listingId, "utf8") > 255) {
+        return res.status(400).json({
+            error: "Malformed request: Listing ID is too long."
+        });
+    }
+
+    //Reject any whitespace characters (spaces, tabs, newlines)
+    if (/\s/.test(listingId)) {
+        return res.status(400).json({
+            error: "Malformed request: Listing ID must not contain whitespace."
+        });
+    }
+
+   // const idString = req.params.id;
 
     //Tests to make sure the input is just digits.
-    if (!/^\d+$/.test(idString)) {
-        return res.status(400).json({
-            error : "Malformed request: ID must be a valid integer containing only digits and no spaces."
-        });
-    }
+   //if (!/^\d+$/.test(idString)) {
+      //  return res.status(400).json({
+      //      error : "Malformed request: ID must be a valid integer containing only digits and no spaces."
+      //  });
+ //   }
 
     //Check the length of the ID. 10 digits is the length for INT
-    if (idString.length > 10) {
-        return res.status(400).json({
-            error: "Malformed request: ID is too long."
-        });
-    }
+   // if (idString.length > 10) {
+      //  return res.status(400).json({
+      //      error: "Malformed request: ID is too long."
+      //  });
+  //  }
 
-    const propertyId = Number.parseInt(idString, 10);
+   // const propertyId = Number.parseInt(idString, 10);
 
     try {
         const [rows] = await pool.query('SELECT * FROM `rets_property` WHERE `id` = ?', [propertyId]);
