@@ -21,18 +21,18 @@ export default function PropertyCard({ property }) {
                 alt={`${property.L_Address} property`}
             />
         ) : (
-            <div className="flex w-full h-48 items-center justify-center">
+            <div className="flex w-full h-48 items-center justify-center rounded-t-lg border">
                 <p>No photo available</p>
             </div>
         )}
         <div className="mt-4">
-            <h2 className="text-xl font-semibold">{property.L_SystemPrice}</h2>
+            <h2 className="text-xl font-semibold">${Number(property.L_SystemPrice).toLocaleString()}</h2>
 
             <p>{property.L_Address}</p>
 
             <p>{property.L_City}, {property.L_State}</p>
 
-            <p>{property.L_Keyword2} beds · {property.LM_Dec_3} baths · {property.L_Keyword1} sqft</p>
+            <p>{property.L_Keyword2} beds · {property.LM_Dec_3 ?? 0} baths · {property.L_Keyword1} sqft</p>
         </div>
     </article>
   );
