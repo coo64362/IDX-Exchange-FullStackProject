@@ -53,3 +53,17 @@ export async function fetchPropertyDetail(id) {
 
     return response.json();
 }
+
+export async function fetchPropertyOpenHouses(id) {
+    const response = await fetch(`/api/properties/${encodeURIComponent(id)}/openhouses`);
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+
+        throw new Error(
+            errorData.error || 'Failed to fetch open houses'
+        );
+    }
+
+    return response.json();
+}

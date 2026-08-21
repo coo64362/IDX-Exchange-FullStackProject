@@ -1,18 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchProperties } from '../../lib/api/client.js';
 import PropertyCardSkeleton from './PropertyCardSkeleton.jsx';
 import PropertyCard from './PropertyCard';
 import PropertyFilters from './PropertyFilters';
 import Pagination from './Pagination';
 
-/**
- * Default response shape.
- *
- * Keeping this outside the component avoids
- * recreating the object every render.
- */
 const EMPTY_DATA = {
     total: 0,
     limit: 20,
@@ -21,63 +15,34 @@ const EMPTY_DATA = {
 };
 
 export default function ListingsPage() {
-    /**
-     * Property results returned from the API.
-     */
     const [data, setData] = useState(EMPTY_DATA);
-
-    /**
-     * Current filter values.
-     */
     const [filters, setFilters] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(20);
 
     const offset = (currentPage - 1) * itemsPerPage;
+    const showingStart = data.total === 0 ? 0 : offset + 1;
+    const showingEnd = Math.min(
+        offset + data.results.length,
+        data.total
+    );
 
-    /**
-     * Loading state.
-     */
     const [loading, setLoading] = useState(true);
-
-    /**
-     * Error message.
-     */
     const [error, setError] = useState(null);
 
-    /**
-     * Prevents stale requests from updating UI.
-     *
-     * Example:
-     *
-     * Search Atlanta -> request 1
-     * Clear -> request 2
-     * Search Chicago -> request 3
-     *
-     * If request 1 finishes last,
-     * it should NOT overwrite Chicago.
-     */
+    // Prevent older requests from overwriting newer search results.
     const requestIdRef = useRef(0);
 
-    /**
-     * Fetch properties from API.
-     */
-    async function loadProperties(searchFilters = {}) {
+    const loadProperties = useCallback(async (searchFilters = {}) => {
         const currentRequestId = ++requestIdRef.current;
 
         try {
-            setLoading(true);
-            setError(null);
-
             const response = await fetchProperties({
                 ...searchFilters,
                 limit: itemsPerPage,
                 offset,
             });
 
-            /**
-             * Ignore stale responses.
-             */
             if (currentRequestId !== requestIdRef.current) {
                 return;
             }
@@ -86,9 +51,6 @@ export default function ListingsPage() {
 
         } catch (err) {
 
-            /**
-             * Ignore stale errors too.
-             */
             if (currentRequestId !== requestIdRef.current) {
                 return;
             }
@@ -97,49 +59,42 @@ export default function ListingsPage() {
 
         } finally {
 
-            /**
-             * Only newest request controls loading.
-             */
             if (currentRequestId === requestIdRef.current) {
                 setLoading(false);
             }
         }
-    }
+    }, [itemsPerPage, offset]);
 
-    /**
-     * Initial page load.
-     */
     useEffect(() => {
-        loadProperties(filters);
-    }, [currentPage, filters]);
+        // Defer the request so React can finish the current render first.
+        const requestTimer = window.setTimeout(() => {
+            void loadProperties(filters);
+        }, 0);
 
-    /**
-     * User clicked Search. 
-     */
+        return () => window.clearTimeout(requestTimer);
+    }, [filters, loadProperties]);
+
     function handleSearch(newFilters) {
+        setLoading(true);
+        setError(null);
         setFilters(newFilters);
         setCurrentPage(1); 
     }
 
-    /**
-     * User clicked Clear Filters.
-     */
     function handleClear() {
+        setLoading(true);
+        setError(null);
         setFilters({});
         setCurrentPage(1);
     }
 
-    /**
-     * When User clicks to the next page OR filter adjusts page.
-     */
     function handlePageChange(page) {
+        setLoading(true);
+        setError(null);
         setCurrentPage(page);
-        window.scrollTo(0, 0); //Make the page start from the top
+        window.scrollTo(0, 0);
     }
 
-    /**
-     * Error UI.
-     */
     if (error) {
         return (
             <main className="p-6">
@@ -159,7 +114,7 @@ export default function ListingsPage() {
             />
 
             <p className="mb-4">
-                Showing {data.results.length} of {data.total} properties
+                Showing {showingStart}-{showingEnd} of {data.total} properties
             </p>
 
             {loading ? (
@@ -172,7 +127,7 @@ export default function ListingsPage() {
 
                 </div>
 
-            ) : data.results.length === 0 ? ( /* No results state */
+            ) : data.results.length === 0 ? (
                 <div className="rounded border p-8 text-center">
                     <h2 className="text-xl font-semibold">
                         No properties found
