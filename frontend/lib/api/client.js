@@ -14,19 +14,24 @@ export async function fetchProperties (params = {}) {
     const response = await fetch(`/api/properties${queryString ? `?${queryString}` : ""}`);
 
     if (!response.ok) {
-        let message = `Failed to fetch property ${response.status}`;
+        let errorData = {};
 
         try {
-            let errorData = await response.json();
-            if (errorData.message) {
-                message = errorData.message;
-            } else if (errorData.error) {
-                message = errorData.error;
-            }
-        }   catch {
-            //The server did not return JSON, default to set message
+            errorData = await response.json();
+        } catch {
+            // The server did not return JSON
         }
-        throw new Error(message);
+
+        const error = new Error(
+            errorData.message ||
+            errorData.error ||
+            `Failed to fetch properties ${response.status}`
+        );
+
+        error.status = response.status;
+        error.type = errorData.error;
+
+        throw error;
     }
 
     return response.json();
@@ -48,6 +53,7 @@ export async function fetchPropertyDetail(id) {
         }   catch {
             //The server did not return JSON, default to set message
         }
+
         throw new Error(message);
     }
 

@@ -3,6 +3,18 @@ const pool = require("../config/db");
 
 const router = express.Router();
 
+const allowedSortColumns = [
+    'L_SystemPrice',
+    'ListingContractDate',
+    'LM_Int2_3',
+    'L_Keyword2'
+];
+
+const allowedSortOrder = [
+    'asc',
+    'desc'
+];
+
 
 router.get('/', async (req, res) => {
     const limit = Number.parseInt(req.query.limit ?? "20", 10);
@@ -15,6 +27,8 @@ router.get('/', async (req, res) => {
         maxPrice,
         beds,
         baths,
+        sortBy,
+        sortOrder,
     } = req.query;
 
     // Validate pagination rules
@@ -58,6 +72,36 @@ router.get('/', async (req, res) => {
         });
     }
 
+    // Check to make sure sortBy is a permitted column
+    if (
+        sortBy !== undefined && !allowedSortColumns.includes(sortBy)
+    ) {
+        return res.status(400).json({
+            error: "Invalid sort option",
+            message: "You can sort by price, date listed, square footage, and beds only",
+        });
+    }
+
+    // Check to make sure sortOrder is valid
+    if (
+        sortOrder !== undefined &&
+        !allowedSortOrder.includes(sortOrder.toLowerCase())
+    ) {
+        return res.status(400).json({
+            error: "Invalid: please sort by ascending or descending",
+        });
+    }
+
+    // Determine the value to ORDER BY
+    let orderBy = 'L_ListingID';
+    if (sortBy !== undefined ) {
+        if (sortOrder !== undefined) {
+            orderBy = sortBy + " " + sortOrder.toUpperCase();
+        } else {
+            orderBy = sortBy + " " + "ASC";
+        }
+    }
+
     const conditions = [];
     const values = [];
 
@@ -93,12 +137,14 @@ router.get('/', async (req, res) => {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
+
+
     try {
         const propertiesSql = `
         SELECT *
         FROM rets_property
         ${whereClause}
-        ORDER BY L_ListingID
+        ORDER BY ${orderBy}
         LIMIT ?
         OFFSET ?
         `;
@@ -150,7 +196,7 @@ router.get('/:id/openhouses', async(req, res) => {
 
     try {
         //Check if property exists
-        const [propertyRows] = await pool.query('SELECT 1 FROM `rets_openhouse` WHERE `L_ListingID` = ?', [listingId]);
+        const [propertyRows] = await pool.query('SELECT 1 FROM `rets_property` WHERE `L_ListingID` = ?', [listingId]);
 
         if (propertyRows.length === 0) {
             return res.status(404).json({
@@ -174,39 +220,21 @@ router.get('/:id', async (req, res) => {
 const propertyId = req.params.id;
 
     //Ensure the ID does not exceed the VARCHAR(255) limit.
-    if (Buffer.byteLength(listingId, "utf8") > 255) {
+    if (Buffer.byteLength(propertyId, "utf8") > 255) {
         return res.status(400).json({
             error: "Malformed request: Listing ID is too long."
         });
     }
 
     //Reject any whitespace characters (spaces, tabs, newlines)
-    if (/\s/.test(listingId)) {
+    if (/\s/.test(propertyId)) {
         return res.status(400).json({
             error: "Malformed request: Listing ID must not contain whitespace."
         });
     }
 
-   // const idString = req.params.id;
-
-    //Tests to make sure the input is just digits.
-   //if (!/^\d+$/.test(idString)) {
-      //  return res.status(400).json({
-      //      error : "Malformed request: ID must be a valid integer containing only digits and no spaces."
-      //  });
- //   }
-
-    //Check the length of the ID. 10 digits is the length for INT
-   // if (idString.length > 10) {
-      //  return res.status(400).json({
-      //      error: "Malformed request: ID is too long."
-      //  });
-  //  }
-
-   // const propertyId = Number.parseInt(idString, 10);
-
     try {
-        const [rows] = await pool.query('SELECT * FROM `rets_property` WHERE `id` = ?', [propertyId]);
+        const [rows] = await pool.query('SELECT * FROM `rets_property` WHERE `L_ListingID` = ?', [propertyId]);
 
         //Extract object from array even if it's just one.
         const property = rows[0];
@@ -231,3 +259,4 @@ const propertyId = req.params.id;
 
 module.exports = router;
 
+//Test wrong sortBy: http://localhost:5001/api/properties?sortBy=L_SystemPrice&sortOrder=asc

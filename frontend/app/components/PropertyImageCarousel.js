@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 
 export default function PropertyImageCarousel({ photos }) {
@@ -29,9 +30,12 @@ export default function PropertyImageCarousel({ photos }) {
 
     return (
         <div className="relative">
-            <img
+            <Image
                 src={photos[currentIndex]}
                 alt={`Property photo ${currentIndex + 1}`}
+                width={800}
+                height={450}
+                unoptimized
                 className="h-48 w-full rounded-t-lg object-cover"
             />
 

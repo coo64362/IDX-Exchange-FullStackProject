@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export default function PropertyImageGallery({ photos }) {
@@ -56,9 +57,12 @@ export default function PropertyImageGallery({ photos }) {
     return (
         <>
             <div>
-                <img
+                <Image
                     src={photos[currentIndex]}
                     alt={`Property photo ${currentIndex + 1}`}
+                    width={1200}
+                    height={675}
+                    unoptimized
                     className="h-96 w-full cursor-pointer rounded-lg object-cover"
                     onClick={() => setLightboxOpen(true)}
                 />
@@ -71,9 +75,12 @@ export default function PropertyImageGallery({ photos }) {
                             onClick={() => setCurrentIndex(index)}
                             className="shrink-0"
                         >
-                            <img
+                            <Image
                                 src={photo}
                                 alt={`Thumbnail ${index + 1}`}
+                                width={96}
+                                height={80}
+                                unoptimized
                                 className={`h-20 w-24 rounded object-cover ${
                                     index === currentIndex
                                         ? 'ring-2 ring-blue-500'
@@ -90,9 +97,12 @@ export default function PropertyImageGallery({ photos }) {
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
                     onClick={() => setLightboxOpen(false)}
                 >
-                    <img
+                    <Image
                         src={photos[currentIndex]}
                         alt={`Property photo ${currentIndex + 1}`}
+                        width={1600}
+                        height={900}
+                        unoptimized
                         className="max-h-[90vh] max-w-[90vw] object-contain"
                         onClick={(event) => event.stopPropagation()}
                     />
