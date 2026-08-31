@@ -249,7 +249,7 @@ const propertyId = req.params.id;
         return res.status(200).json(property);
 
     } catch (error) {
-        console.log('Failed to fetch property: ', error);
+        console.error('Failed to fetch property: ', error);
 
         return res.status(500).json({ 
             error: "Something went wrong on our end. Please refresh the page or try again in a few minutes." 
@@ -258,5 +258,3 @@ const propertyId = req.params.id;
 });
 
 module.exports = router;
-
-//Test wrong sortBy: http://localhost:5001/api/properties?sortBy=L_SystemPrice&sortOrder=asc

@@ -26,7 +26,6 @@ const INITIAL_FILTERS = {
    - Notify the parent when Clear Filters is clicked.
  */
 export default function PropertyFilters({onSearch, onClear}) {
-     //throw new Error("Simulated filter crash testing!");
     const [filters, setFilters] = useState(INITIAL_FILTERS);
 
     /*

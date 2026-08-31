@@ -6,6 +6,7 @@ import {
     fetchPropertyDetail,
     fetchPropertyOpenHouses,
 } from '../../../lib/api/client.js';
+import { formatPrice } from '../../../lib/utils/formatPrice';
 import PropertyImageGallery from '../../components/PropertyImageGallery';
 import PropertyMap from '../../components/PropertyMap';
 import OpenHouseList from '../../components/OpenHouseList';
@@ -87,17 +88,7 @@ export default function PropertyDetailPage() {
         photos = property.L_Photos;
     }
 
-    const price = Number(
-        String(property.L_SystemPrice ?? '').replace(/[$,]/g, '')
-    );
-    const formattedPrice =
-        Number.isFinite(price) && price > 0
-            ? new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: 'USD',
-                  maximumFractionDigits: 0,
-              }).format(price)
-            : 'Price unavailable';
+    const formattedPrice = formatPrice(property.L_SystemPrice);
 
     return (
         <main className="mx-auto max-w-6xl p-6">

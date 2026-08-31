@@ -1,19 +1,10 @@
 import PropertyImageCarousel from './PropertyImageCarousel';
 import Link from 'next/link';
+import { formatPrice } from '../../lib/utils/formatPrice';
 
 export default function PropertyCard({ property }) {
 let photos = [];
-    const price = Number(
-        String(property.L_SystemPrice ?? '').replace(/[$,]/g, '')
-    );
-    const formattedPrice =
-        Number.isFinite(price) && price > 0
-            ? new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: 'USD',
-                  maximumFractionDigits: 0,
-              }).format(price)
-            : 'Price unavailable';
+    const formattedPrice = formatPrice(property.L_SystemPrice);
 
     if (property.L_Photos) {
         try {

@@ -35,13 +35,11 @@ app.get("/", (req, res) => {
 
 app.get("/api/health", async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT 1 AS db_status");
+    await pool.query("SELECT 1 AS db_status");
 
     res.status(200).json({
       status: "ok",
-      //message: "Database connection is healthy",
       database: "connected",
-      //result: rows[0],
     });
   } catch (error) {
     console.error("Database health check failed:", error.message);
