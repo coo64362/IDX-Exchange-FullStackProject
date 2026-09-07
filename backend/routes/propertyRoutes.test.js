@@ -239,3 +239,69 @@ describe("GET /api/properties/:id", () => {
         expect(pool.query).not.toHaveBeenCalled();
     });
 });
+
+describe("GET /api/properties/:id/openhouses", () => {
+    test("returns the open houses for an existing property", async () => {
+        const fakeOpenHouses = [
+            {
+                L_ListingID: "TEST-100",
+                OpenHouseDate: "2026-09-12",
+                OH_StartTime: "10:00:00",
+            },
+            {
+                L_ListingID: "TEST-100",
+                OpenHouseDate: "2026-09-13",
+                OH_StartTime: "13:00:00",
+            },
+        ];
+
+        //First query: confirm that the property exists.
+        pool.query.mockResolvedValueOnce([[{L_ListingID: "TEST-100"}]]);
+
+        //Second query: return the property's open houses.
+        pool.query.mockResolvedValueOnce([fakeOpenHouses]);
+
+        const response = await request(app)
+        .get("/api/properties/TEST-100/openhouses");
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual(fakeOpenHouses);
+
+        expect(pool.query).toHaveBeenCalledTimes(2);
+        expect(pool.query.mock.calls[0][1]).toEqual(["TEST-100"]);
+        expect(pool.query.mock.calls[1][1]).toEqual(["TEST-100"]);
+    });
+
+    test("returns an empty array when the property has no open houses", async () => {
+        //The property exists.
+        pool.query.mockResolvedValueOnce([[{L_ListingID: "TEST-200"}]]);
+
+        //The open-house query finds no rows.
+        pool.query.mockResolvedValueOnce([[]]);
+
+        const response = await request(app)
+        .get("/api/properties/TEST-200/openhouses");
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual([]);
+
+        expect(pool.query).toHaveBeenCalledTimes(2);
+        expect(pool.query.mock.calls[0][1]).toEqual(["TEST-200"]);
+        expect(pool.query.mock.calls[1][1]).toEqual(["TEST-200"]);
+    });
+
+    test("returns 404 when the property does not exist", async () => {
+        //The property-existence query finds no rows.
+        pool.query.mockResolvedValueOnce([[]]);
+
+        const response = await request(app)
+        .get("/api/properties/UNKNOWN-ID/openhouses");
+        
+        expect(response.body).toEqual({
+            error: "Property not found.",
+        });
+
+        expect(pool.query).toHaveBeenCalledTimes(1);
+        expect(pool.query.mock.calls[0][1]).toEqual(["UNKNOWN-ID"]);
+    });
+});
