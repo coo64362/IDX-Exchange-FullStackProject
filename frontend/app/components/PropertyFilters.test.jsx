@@ -119,30 +119,37 @@ describe('PropertyFilters', () => {
     });
 
     test('clears every input and calls onClear', async () => {
-
         const { onClear } = renderFilters();
-
         const user = userEvent.setup();
 
-        const city =
-            screen.getByPlaceholderText('City');
+        const city = screen.getByPlaceholderText('City');
+        const zipcode = screen.getByPlaceholderText('ZIP Code');
+        const minPrice = screen.getByPlaceholderText('Min Price');
+        const maxPrice = screen.getByPlaceholderText('Max Price');
+        const beds = screen.getByDisplayValue('Beds');
+        const baths = screen.getByDisplayValue('Baths');
 
-        await user.type(
-            city,
-            'Atlanta'
-        );
-
-        expect(city.value).toBe('Atlanta');
+        await user.type(city, 'Atlanta');
+        await user.type(zipcode, '30309');
+        await user.type(minPrice, '300000');
+        await user.type(maxPrice, '700000');
+        await user.selectOptions(beds, '3');
+        await user.selectOptions(baths, '2');
 
         await user.click(
             screen.getByRole('button', {
-                name: /clear filters/i,
+            name: /clear filters/i,
             })
         );
 
         expect(onClear).toHaveBeenCalledTimes(1);
 
-        expect(city.value).toBe('');
+        expect(city).toHaveValue('');
+        expect(zipcode).toHaveValue('');
+        expect(minPrice).toHaveValue(null);
+        expect(maxPrice).toHaveValue(null);
+        expect(beds).toHaveValue('');
+        expect(baths).toHaveValue('');
     });
 
 });
